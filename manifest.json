@@ -1,5 +1,5 @@
 {
-  "name": "CDN proxy",
+  "name": "CDN offline proxy",
   "version": "0.0.1",
   "manifest_version": 2,
   "icons": {
@@ -12,16 +12,11 @@
   },
   "browser_action": {
     "default_icon": "icons/icon19.png",
-    "default_title": "CDN proxy"
+    "default_title": "CDN offline proxy"
   },
   "permissions": [
     "tabs",
-    "storage",
     "webRequest", "webRequestBlocking",
-    "*://*.madcat/",
-    "*://ajax.googleapis.com/"
-  ],
-  "web_accessible_resources": [
-    "*"
+    "*://*/*"
   ]
 }
