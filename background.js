@@ -51,7 +51,7 @@ function beforeRequestCallback(details) {
             if (~details.url.indexOf(domain)) {
 
                 var key = details.url;
-                var cachedResponse = storage.get(key) // ?? TODO!
+                var cachedResponse = storage.get(key) // ?? TODO! -- see: http://stackoverflow.com/a/18579032
 
                 if (cachedResponse) {
 
