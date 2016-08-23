@@ -8,6 +8,7 @@ var cdnDomains = [
     'cdnjs.cloudflare.com',
     'code.jquery.com',
     'aui-cdn.atlassian.com',
+    'npmcdn.com'
 ];
 
 /***** END CONFIG *****/
@@ -30,34 +31,51 @@ var cacheIsActive = false;
 
 /* Source: https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_.22Unicode_Problem.22 */
 function b64EncodeUnicode(str) {
-    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function (match, p1) {
         return String.fromCharCode('0x' + p1);
     }));
 }
 
+// unfortionally `sessionStorage` has very strict quota of 5MB, see https://developer.chrome.com/apps/offline_storage 
+// unfortionally `chrome.storage.local` is async and does not work nicely together with the callback
+var storage = chrome.storage.local;
 
 ///// Caching and filter implemention
 
 function beforeRequestCallback(details) {
+
     if (details.method === 'GET' && details.tabId !== -1) {
-        var domain, mime;
         for (var i = 0, ii = cdnDomains.length; i < ii; i++) {
-            domain = cdnDomains[i];
-            if (details.url.indexOf(domain) > -1) {
+            
+            var domain = cdnDomains[i];
+            if (~details.url.indexOf(domain)) {
+
                 var key = details.url;
-                var resBody = sessionStorage.getItem(key);
-                if (resBody) {
+                var cachedResponse = storage.get(key) // ?? TODO!
+
+                if (cachedResponse) {
+
                     // TODO: Make this actually correct instead of guesswork
-                    mime = details.type === 'stylesheet' ? 'text/css' : 'application/javascript';
+                    var mime = details.type === 'stylesheet' ? 'text/css' : 'application/javascript';
+                    var resBody = cachedResponse.body;
+
                     return {
-                        redirectUrl: 'data:' + mime + ';base64,' + resBody
+                        redirectUrl: 'data:' + mime + ';base64,' + b64EncodeUnicode(resBody)
                     };
                 }
-                fetch(key).then(function (response) {
-                    return response.text();
-                }).then(function (body) {
+
+                fetch(key).then(function (resBody) {
+                    return resBody.text();
+                }).then(function (responseBody) {
                     try {
-                        sessionStorage.setItem(key, b64EncodeUnicode(body));
+
+                        var resp = {
+                            key: {
+                                body: (responseBody)
+                            }
+                        }
+
+                        storage.set(resp)
                     } catch (e) {
                         console.error('Failed to set item: ' + key, e);
                     }
@@ -78,7 +96,7 @@ function setCacheActive(isActive) {
     cacheIsActive = !!isActive;
     if (cacheIsActive) {
         chrome.webRequest.onBeforeRequest.addListener(beforeRequestCallback, webRequestFilter, beforeRequestOptions);
-        chrome.browserAction.setBadgeText({text: 'ON'});
+        chrome.browserAction.setBadgeText({ text: 'ON' });
         chrome.browserAction.setIcon({
             path: {
                 19: 'icons/icon-on-19.png',
@@ -87,7 +105,7 @@ function setCacheActive(isActive) {
         });
     } else {
         chrome.webRequest.onBeforeRequest.removeListener(beforeRequestCallback, webRequestFilter, beforeRequestOptions);
-        chrome.browserAction.setBadgeText({text: ''});
+        chrome.browserAction.setBadgeText({ text: '' });
         chrome.browserAction.setIcon({
             path: {
                 19: 'icons/icon-off-19.png',
