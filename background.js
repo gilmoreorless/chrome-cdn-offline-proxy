@@ -8,7 +8,8 @@ var cdnDomains = [
     'cdnjs.cloudflare.com',
     'code.jquery.com',
     'aui-cdn.atlassian.com',
-    'npmcdn.com'
+    'npmcdn.com',
+    'fonts.googleapis.com'
     // add your other CDN here!
 ];
 
@@ -42,9 +43,7 @@ function removeListener() {
 function getContentType(headers, details) {
     var contentTypeFallback = details.type === 'stylesheet' ? 'text/css' : 'application/javascript';
     var contentType = headers.get('Content-Type') || contentTypeFallback;
-    return contentType
-        .replace(/charset=(.*)/i, '') // charset does not work together with base64
-        .replace(/;$/, '');
+    return contentType.replace(/;\s{0,1}charset=.*/, ''); // charset does not work together with base64
 }
 
 function beforeRequestCallback(details) {
