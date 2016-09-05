@@ -19,7 +19,7 @@ When set to active mode, this extension will:
 
 More and more websites are loading front-end dependencies via common CDNs such as [cdnjs](https://cdnjs.com/).
 This is great for performance and dependency maintenance.
-But for anyone like me who does a lot of development without a network connection (e.g. while on a train),
+But for anyone who does a lot of development without a network connection (e.g. while on a train),
 these CDN dependencies become a problem.
 
 This plugin a super-simple way to cache CDN-loaded files offline.
@@ -41,3 +41,6 @@ A simple disable/enable of the extension will clear the cache again.
 
 Copyright (c) 2015 Gilmore Davidson  
 Copyright (c) 2016 Johannes Hoppe  
+
+This i a fork of [gilmoreorless/chrome-cdn-offline-proxy](https://github.com/gilmoreorless/chrome-cdn-offline-proxy).  
+Obviously we both travel by train very often.
