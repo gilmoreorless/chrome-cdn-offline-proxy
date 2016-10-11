@@ -41,6 +41,3 @@ A simple disable/enable of the extension will clear the cache again.
 
 Copyright (c) 2015 Gilmore Davidson  
 Copyright (c) 2016 Johannes Hoppe  
-
-This is a fork of [gilmoreorless/chrome-cdn-offline-proxy](https://github.com/gilmoreorless/chrome-cdn-offline-proxy).  
-Obviously we both travel by train very often.
