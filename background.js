@@ -9,7 +9,9 @@ var cdnDomains = [
     'code.jquery.com',
     'aui-cdn.atlassian.com',
     'npmcdn.com',
-    'fonts.googleapis.com'
+    'unpkg.com',
+    'fonts.googleapis.com',
+    'fonts.gstatic.com'
     // add your other CDN here!
 ];
 
