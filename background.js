@@ -8,25 +8,21 @@ var cdnDomains = [
     'cdnjs.cloudflare.com',
     'code.jquery.com',
     'aui-cdn.atlassian.com',
+    'npmcdn.com',
+    'unpkg.com',
+    'fonts.googleapis.com',
+    'fonts.gstatic.com'
+    // add your other CDN here!
 ];
 
 /***** END CONFIG *****/
 
-
-///// Storage and options
-
-var filterDomains = cdnDomains.map(function (domain) {
-    return '*://' + domain + '/*';
-});
 var webRequestFilter = {
-    urls: filterDomains,
+    urls: cdnDomains.map(function (domain) {
+        return '*://' + domain + '/*';
+    }),
     types: ['stylesheet', 'script', 'image', 'object', 'xmlhttprequest']
 };
-var beforeRequestOptions = ['blocking'];
-var cacheIsActive = false;
-
-
-///// Helper methods
 
 /* Source: https://developer.mozilla.org/en-US/docs/Web/API/WindowBase64/Base64_encoding_and_decoding#The_.22Unicode_Problem.22 */
 function b64EncodeUnicode(str) {
@@ -35,32 +31,46 @@ function b64EncodeUnicode(str) {
     }));
 }
 
-
 ///// Caching and filter implemention
+
+function addListener() {
+    chrome.webRequest.onBeforeRequest.addListener(beforeRequestCallback, webRequestFilter, ['blocking']);
+}
+
+function removeListener() {
+    chrome.webRequest.onBeforeRequest.removeListener(beforeRequestCallback);
+}
+
+// returns content-type without charset ()
+function getContentType(headers, details) {
+    var contentTypeFallback = details.type === 'stylesheet' ? 'text/css' : 'application/javascript';
+    var contentType = headers.get('Content-Type') || contentTypeFallback;
+    return contentType.replace(/;\s{0,1}charset=.*/, ''); // charset does not work together with base64
+}
 
 function beforeRequestCallback(details) {
     if (details.method === 'GET' && details.tabId !== -1) {
-        var domain, mime;
         for (var i = 0, ii = cdnDomains.length; i < ii; i++) {
-            domain = cdnDomains[i];
+            var domain = cdnDomains[i];
             if (details.url.indexOf(domain) > -1) {
                 var key = details.url;
-                var resBody = sessionStorage.getItem(key);
-                if (resBody) {
-                    // TODO: Make this actually correct instead of guesswork
-                    mime = details.type === 'stylesheet' ? 'text/css' : 'application/javascript';
+                var response = sessionStorage.getItem(key);
+                if (response) {
                     return {
-                        redirectUrl: 'data:' + mime + ';base64,' + resBody
+                        redirectUrl: response
                     };
                 }
                 fetch(key).then(function (response) {
-                    return response.text();
-                }).then(function (body) {
-                    try {
-                        sessionStorage.setItem(key, b64EncodeUnicode(body));
-                    } catch (e) {
-                        console.error('Failed to set item: ' + key, e);
-                    }
+                    response.text().then(function (responseBody) {
+                        var bodyEncoded = b64EncodeUnicode(responseBody);
+                        var contentType = getContentType(response.headers, details);
+                        var value = 'data:' + contentType + ';base64,' + bodyEncoded;
+                        try {
+                            sessionStorage.setItem(key, value);
+                        } catch (e) {
+                            console.error('Failed to set item: ' + key, e);
+                        }
+                    });
                 });
             }
         }
@@ -70,6 +80,8 @@ function beforeRequestCallback(details) {
 
 ///// Browser action (enable/disable filter)
 
+var cacheIsActive = false;
+
 function handleBrowserAction() {
     setCacheActive(!cacheIsActive);
 }
@@ -77,8 +89,8 @@ function handleBrowserAction() {
 function setCacheActive(isActive) {
     cacheIsActive = !!isActive;
     if (cacheIsActive) {
-        chrome.webRequest.onBeforeRequest.addListener(beforeRequestCallback, webRequestFilter, beforeRequestOptions);
-        chrome.browserAction.setBadgeText({text: 'ON'});
+        addListener();
+        chrome.browserAction.setBadgeText({ text: 'ON' });
         chrome.browserAction.setIcon({
             path: {
                 19: 'icons/icon-on-19.png',
@@ -86,8 +98,8 @@ function setCacheActive(isActive) {
             }
         });
     } else {
-        chrome.webRequest.onBeforeRequest.removeListener(beforeRequestCallback, webRequestFilter, beforeRequestOptions);
-        chrome.browserAction.setBadgeText({text: ''});
+        removeListener();
+        chrome.browserAction.setBadgeText({ text: '' });
         chrome.browserAction.setIcon({
             path: {
                 19: 'icons/icon-off-19.png',
