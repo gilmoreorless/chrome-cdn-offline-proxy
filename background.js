@@ -17,6 +17,8 @@ var cdnDomains = [
 
 /***** END CONFIG *****/
 
+var cache = new Map();
+
 var webRequestFilter = {
     urls: cdnDomains.map(function (domain) {
         return '*://' + domain + '/*';
@@ -54,7 +56,7 @@ function beforeRequestCallback(details) {
             var domain = cdnDomains[i];
             if (details.url.indexOf(domain) > -1) {
                 var key = details.url;
-                var response = sessionStorage.getItem(key);
+                var response = cache.get(key);
                 if (response) {
                     return {
                         redirectUrl: response
@@ -66,7 +68,8 @@ function beforeRequestCallback(details) {
                         var contentType = getContentType(response.headers, details);
                         var value = 'data:' + contentType + ';base64,' + bodyEncoded;
                         try {
-                            sessionStorage.setItem(key, value);
+                            console.log('setting %s (%d bytes)', key, value.length);
+                            cache.set(key, value);
                         } catch (e) {
                             console.error('Failed to set item: ' + key, e);
                         }
