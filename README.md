@@ -1,3 +1,14 @@
+> [!WARNING]
+> **This project is not maintained and was archived in 2026.**
+>
+> This browser extension was designed as an experiment for my own needs at a specific point in time.
+> I have no need for it now (and honestly didn’t even use it much at the time).
+> It has not been updated to work with Manifest v3 requirements.
+>
+> What follows is the original README as it was written in 2015.
+
+----
+
 # CDN offline proxy/cache
 
 A proof-of-concept Chrome browser extension to help with offline web development.
